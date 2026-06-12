@@ -26,6 +26,7 @@ let currentPage = 'tracker';
 function setShellVisible(loggedIn) {
   document.getElementById('app-header')?.classList.toggle('hidden', !loggedIn);
   document.getElementById('bottom-nav')?.classList.toggle('hidden', !loggedIn);
+  document.getElementById('app-footer')?.classList.toggle('footer-above-nav', loggedIn);
 }
 
 function updateNavActive(page) {

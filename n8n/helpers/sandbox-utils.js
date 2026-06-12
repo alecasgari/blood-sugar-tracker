@@ -1,11 +1,22 @@
 // توابع کمکی برای نود Code در n8n 2.x (بدون require('crypto'))
 // این فایل فقط مرجع است — کد در ورکفلوها inline شده.
 
+const APP_TIMEZONE = 'Asia/Dubai';
+
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
   });
+}
+
+function formatAppDateTime(date = new Date()) {
+  const now = date instanceof Date ? date : new Date(date);
+  return {
+    Date: now.toLocaleDateString('fa-IR', { timeZone: APP_TIMEZONE }),
+    Time: now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', timeZone: APP_TIMEZONE }),
+    createdAt: now.toISOString(),
+  };
 }
 
 function sha256hex(str) {

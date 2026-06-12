@@ -126,6 +126,16 @@
 
 ---
 
+### زمان‌بندی (Timezone)
+
+تنظیم timezone در n8n UI روی Code node اثر **ندارد**. سرور n8n معمولاً UTC است.
+
+در نود **Build Record** باید صریحاً `timeZone: 'Asia/Dubai'` در `toLocaleDateString` / `toLocaleTimeString` باشد (در JSON ورکفلوها inline شده).
+
+مرجع: `n8n/helpers/sandbox-utils.js` → `formatAppDateTime()`
+
+---
+
 ## CORS (مهم برای GitHub Pages)
 
 هر Webhook در این ورکفلوها `Allowed Origins: *` دارد. اگر از دامنه خاصی سرو می‌کنید، در نود Webhook مقدار را به دامنه GitHub Pages خود تغییر دهید، مثلاً:

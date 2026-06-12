@@ -259,6 +259,15 @@
   }
 }
 
+/* ─── App Footer ─────────────────────────────────────────────────── */
+#app-footer {
+  bottom: 0.5rem;
+}
+
+#app-footer.footer-above-nav {
+  bottom: 4.25rem;
+}
+
 /* ─── Meal Context Picker ───────────────────────────────────────── */
 .meal-option:has(input:checked) > div {
   border-color: #3b82f6;

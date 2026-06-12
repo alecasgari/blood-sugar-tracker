@@ -1,0 +1,154 @@
+{
+  "name": "BST - History",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "history",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook History",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "bst-history-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst userId = (body.userId || body.userid || '').toString().trim();\n\nif (!userId) {\n  return [{ json: { error: true, statusCode: 400, message: 'شناسه کاربر الزامی است' } }];\n}\n\nreturn [{ json: { error: false, userId } }];"
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000002",
+      "name": "Validate userId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-history-error",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000003",
+      "name": "Validation Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, message: $json.message } }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode || 400 }}"
+        }
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000004",
+      "name": "Respond Validation Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [780, 120]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Records"
+        },
+        "options": {}
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000005",
+      "name": "Read Records Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [780, 400],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const userId = $('Validate userId').first().json.userId;\nconst rows = $input.all().map(item => item.json);\n\nconst records = rows\n  .filter(row => {\n    const id = (row.userId || row.userid || '').toString().trim();\n    if (!id || id === 'userId') return false;\n    return id === userId;\n  })\n  .map(row => ({\n    Date: row.Date || row.date || '',\n    Time: row.Time || row.time || '',\n    BloodSugar: Number(row.BloodSugar ?? row.bloodsugar ?? row.value ?? 0),\n    Notes: row.Notes || row.notes || ''\n  }))\n  .filter(row => row.BloodSugar > 0)\n  .sort((a, b) => {\n    const keyA = `${a.Date} ${a.Time}`;\n    const keyB = `${b.Date} ${b.Time}`;\n    return keyB.localeCompare(keyA);\n  });\n\nreturn [{ json: { records } }];"
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000006",
+      "name": "Filter and Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.records }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "d1b2c3d4-0001-4000-8000-000000000008",
+      "name": "Respond History",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 400]
+    }
+  ],
+  "connections": {
+    "Webhook History": {
+      "main": [[{ "node": "Validate userId", "type": "main", "index": 0 }]]
+    },
+    "Validate userId": {
+      "main": [[{ "node": "Validation Error?", "type": "main", "index": 0 }]]
+    },
+    "Validation Error?": {
+      "main": [
+        [{ "node": "Respond Validation Error", "type": "main", "index": 0 }],
+        [{ "node": "Read Records Sheet", "type": "main", "index": 0 }]
+      ]
+    },
+    "Read Records Sheet": {
+      "main": [[{ "node": "Filter and Format", "type": "main", "index": 0 }]]
+    },
+    "Filter and Format": {
+      "main": [[{ "node": "Respond History", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [{ "name": "blood-sugar-tracker" }],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

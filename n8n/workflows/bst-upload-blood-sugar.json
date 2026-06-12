@@ -1,0 +1,270 @@
+{
+  "name": "BST - Upload Blood Sugar",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "upload-blood-sugar",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "binaryPropertyName": "image"
+        }
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook Upload",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 400],
+      "webhookId": "bst-upload-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json;\nconst userId = (body.userId || body.userid || '').toString().trim();\n\nif (!userId) {\n  return [{ json: { error: true, statusCode: 400, message: 'شناسه کاربر الزامی است' } }];\n}\n\nconst binaryKey = item.binary?.image ? 'image' : (item.binary?.data ? 'data' : null);\nif (!binaryKey) {\n  return [{ json: { error: true, statusCode: 400, message: 'فایل تصویر ارسال نشده است' } }];\n}\n\nreturn [{\n  json: { error: false, userId, binaryKey },\n  binary: item.binary\n}];"
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000002",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-validation-error",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000003",
+      "name": "Validation Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, message: $json.message } }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode || 400 }}"
+        }
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000004",
+      "name": "Respond Upload Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
+        },
+        "text": "You are a medical image OCR specialist for glucometer displays.\n\nAnalyze the attached image and extract the main blood glucose reading.\n\nRules:\n- Read ONLY the primary glucose number on the device screen.\n- Ignore date, time, battery, arrows, and menus unless useful for notes.\n- bloodSugar: number or null if unreadable.\n- unit: exactly \"mg/dL\" or \"mmol/L\" (default \"mg/dL\").\n- confidence: \"high\" | \"medium\" | \"low\".\n- notes: short Persian text (max 120 chars).\n\nReturn ONLY this JSON object, no markdown, no extra text:\n{\"bloodSugar\":112,\"unit\":\"mg/dL\",\"confidence\":\"high\",\"notes\":\"عدد واضح روی صفحه نمایش\"}",
+        "inputType": "binary",
+        "binaryPropertyName": "={{ $json.binaryKey || 'image' }}",
+        "simplify": false,
+        "options": {}
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000010",
+      "name": "Analyze an image",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [720, 480],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\nfunction extractTextFromParts(parts) {\n  if (!Array.isArray(parts)) return '';\n  const withText = parts.find((p) => typeof p.text === 'string' && p.text.trim());\n  return withText?.text || '';\n}\n\nlet text = '';\n\nif (Array.isArray(raw.candidates) && raw.candidates.length) {\n  text = extractTextFromParts(raw.candidates[0]?.content?.parts);\n}\nif (!text && raw.content?.parts?.length) {\n  text = extractTextFromParts(raw.content.parts);\n}\nif (!text && typeof raw.text === 'string') text = raw.text;\nif (!text && typeof raw.output === 'string') text = raw.output;\n\nconst cleaned = text.replace(/```json\\s*|```/gi, '').trim();\nlet parsed = {};\n\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  return [{\n    json: {\n      error: true,\n      statusCode: 422,\n      message: 'پاسخ Gemini قابل خواندن نیست',\n      rawText: text\n    }\n  }];\n}\n\nreturn [{ json: { error: false, ...parsed } }];"
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000011",
+      "name": "Parse Gemini JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "function generateUUID() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {\n    const r = (Math.random() * 16) | 0;\n    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);\n  });\n}\n\nconst input = $input.first().json;\n\nif (input.error) {\n  return [{ json: input }];\n}\n\nconst userId = $('Validate Input').first().json.userId;\nlet bloodSugar = Number(input.bloodSugar ?? input.blood_sugar);\nconst unit = (input.unit || 'mg/dL').toString();\n\nif (unit.toLowerCase() === 'mmol/l' && !isNaN(bloodSugar)) {\n  bloodSugar = Math.round(bloodSugar * 18.0182);\n}\n\nif (!bloodSugar || isNaN(bloodSugar) || bloodSugar <= 0 || bloodSugar > 600) {\n  return [{\n    json: {\n      error: true,\n      statusCode: 422,\n      message: input.notes || 'عدد قند خون از عکس قابل تشخیص نبود. عکس واضح‌تری بگیرید.'\n    }\n  }];\n}\n\nconst now = new Date();\nconst confidence = input.confidence || 'unknown';\nconst notes = input.notes || `خوانده‌شده توسط Gemini (${confidence})`;\n\nreturn [{\n  json: {\n    error: false,\n    recordId: generateUUID(),\n    userId,\n    Date: now.toLocaleDateString('fa-IR'),\n    Time: now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),\n    BloodSugar: Math.round(bloodSugar),\n    Notes: notes,\n    createdAt: now.toISOString()\n  }\n}];"
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000013",
+      "name": "Build Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 480]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-ocr-error",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000014",
+      "name": "OCR Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1440, 480]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, message: $json.message } }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode || 422 }}"
+        }
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000015",
+      "name": "Respond OCR Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Records"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "recordId": "={{ $json.recordId }}",
+            "userId": "={{ $json.userId }}",
+            "Date": "={{ $json.Date }}",
+            "Time": "={{ $json.Time }}",
+            "BloodSugar": "={{ $json.BloodSugar }}",
+            "Notes": "={{ $json.Notes }}",
+            "createdAt": "={{ $json.createdAt }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "recordId", "displayName": "recordId", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "userId", "displayName": "userId", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Date", "displayName": "Date", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Time", "displayName": "Time", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "BloodSugar", "displayName": "BloodSugar", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Notes", "displayName": "Notes", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "createdAt", "displayName": "createdAt", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000005",
+      "name": "Save Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1680, 560],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, bloodSugar: $('Build Record').item.json.BloodSugar, notes: $('Build Record').item.json.Notes, message: 'ثبت شد' } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "c1b2c3d4-0001-4000-8000-000000000006",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 560]
+    }
+  ],
+  "connections": {
+    "Webhook Upload": {
+      "main": [[{ "node": "Validate Input", "type": "main", "index": 0 }]]
+    },
+    "Validate Input": {
+      "main": [[{ "node": "Validation Error?", "type": "main", "index": 0 }]]
+    },
+    "Validation Error?": {
+      "main": [
+        [{ "node": "Respond Upload Error", "type": "main", "index": 0 }],
+        [{ "node": "Analyze an image", "type": "main", "index": 0 }]
+      ]
+    },
+    "Analyze an image": {
+      "main": [[{ "node": "Parse Gemini JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse Gemini JSON": {
+      "main": [[{ "node": "Build Record", "type": "main", "index": 0 }]]
+    },
+    "Build Record": {
+      "main": [[{ "node": "OCR Error?", "type": "main", "index": 0 }]]
+    },
+    "OCR Error?": {
+      "main": [
+        [{ "node": "Respond OCR Error", "type": "main", "index": 0 }],
+        [{ "node": "Save Record", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save Record": {
+      "main": [[{ "node": "Respond Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [{ "name": "blood-sugar-tracker" }],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

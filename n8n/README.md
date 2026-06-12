@@ -1,0 +1,138 @@
+# راهنمای ورکفلوهای n8n — Blood Sugar Tracker
+
+## پیش‌نیازها
+
+1. یک نمونه **n8n** (Cloud یا Self-hosted)
+2. یک **Google Sheet** با دو تب (Sheet)
+3. اکانت Google متصل به n8n (Credential نوع Google Sheets)
+
+---
+
+## ساخت Google Sheet
+
+یک Spreadsheet جدید بسازید و دو Sheet با این نام‌ها و ستون‌ها ایجاد کنید:
+
+### تب `Users`
+
+| userId | email | passwordHash | createdAt |
+|--------|-------|--------------|-----------|
+| (خالی بگذارید — n8n پر می‌کند) | | | |
+
+### تب `Records`
+
+| recordId | userId | Date | Time | BloodSugar | Notes | createdAt |
+|----------|--------|------|------|------------|-------|-----------|
+| (خالی بگذارید) | | | | | | |
+
+**ID شیت** را از URL کپی کنید:
+`https://docs.google.com/spreadsheets/d/این-قسمت-ID-است/edit`
+
+---
+
+## ایمپورت ورکفلوها در n8n
+
+1. در n8n بروید به **Workflows → Import from File**
+2. هر فایل JSON داخل پوشه `workflows/` را جداگانه ایمپورت کنید:
+   - `bst-register.json`
+   - `bst-login.json`
+   - `bst-upload-blood-sugar.json`
+   - `bst-history.json`
+3. در **هر ورکفلو**، نودهای **Google Sheets** را باز کنید و:
+   - Credential گوگل خود را وصل کنید
+   - **Document ID** را با ID شیت خود جایگزین کنید
+4. هر ورکفلو را **Activate** (فعال) کنید
+5. URL واقعی Webhook را از نود Webhook کپی کنید و در `js/api.js` قرار دهید
+
+---
+
+## آدرس Webhook (پس از فعال‌سازی)
+
+| ورکفلو | Path پیش‌فرض | متغیر در api.js |
+|--------|--------------|-----------------|
+| Register | `/webhook/register` | `WEBHOOK_REGISTER` |
+| Login | `/webhook/login` | `WEBHOOK_LOGIN` |
+| Upload | `/webhook/upload-blood-sugar` | `WEBHOOK_UPLOAD` |
+| History | `/webhook/history` | `WEBHOOK_HISTORY` |
+
+مثال:
+`https://your-n8n.app.n8n.cloud/webhook/login`
+
+---
+
+## قرارداد API (Frontend ↔ n8n)
+
+### ثبت‌نام — POST JSON
+```json
+{ "email": "user@example.com", "password": "secret123" }
+```
+**پاسخ موفق (200):**
+```json
+{ "success": true, "userId": "uuid", "email": "user@example.com" }
+```
+**پاسخ خطا (401):**
+```json
+{ "success": false, "message": "این ایمیل قبلاً ثبت شده است" }
+```
+
+### ورود — POST JSON
+```json
+{ "email": "user@example.com", "password": "secret123" }
+```
+**پاسخ موفق (200):**
+```json
+{ "success": true, "userId": "uuid", "email": "user@example.com" }
+```
+
+### آپلود عکس — POST multipart/form-data
+- `userId` — متن
+- `image` — فایل تصویر
+
+**پاسخ موفق (200):**
+```json
+{ "success": true, "bloodSugar": 112, "message": "ثبت شد" }
+```
+
+### تاریخچه — POST JSON
+```json
+{ "userId": "uuid" }
+```
+**پاسخ موفق (200):** آرایه مستقیم
+```json
+[
+  { "Date": "1404/03/15", "Time": "08:30", "BloodSugar": 95, "Notes": "ثبت خودکار از عکس" }
+]
+```
+
+---
+
+## CORS (مهم برای GitHub Pages)
+
+هر Webhook در این ورکفلوها `Allowed Origins: *` دارد. اگر از دامنه خاصی سرو می‌کنید، در نود Webhook مقدار را به دامنه GitHub Pages خود تغییر دهید، مثلاً:
+`https://username.github.io`
+
+---
+
+## OCR واقعی (جایگزین Mock)
+
+ورکفلو آپلود فعلاً با **Code node** مقدار قند را شبیه‌سازی می‌کند. برای OCR واقعی:
+
+1. نود **OpenAI** (یا **HTTP Request** به Gemini Vision) بعد از Webhook اضافه کنید
+2. تصویر باینری را از `{{ $binary.image }}` بخوانید
+3. خروجی مدل را Parse کرده و `BloodSugar` را در Google Sheets ذخیره کنید
+
+---
+
+## n8n 2.x — محدودیت Sandbox
+
+در n8n نسخه ۲.۲۲+، `require('crypto')` در نود **Code** مجاز نیست. ورکفلوها از توابع خالص JS برای `SHA-256` و `UUID` استفاده می‌کنند (بدون import ماژول Node).
+
+اگر فقط یک نود را دستی اصلاح می‌کنید، کد مرجع در `n8n/helpers/sandbox-utils.js` است.
+
+---
+
+## امنیت (پیشنهاد Production)
+
+- رمز عبور با SHA-256 هش می‌شود (در Code node). برای Production از **bcrypt** یا سرویس Auth اختصاصی استفاده کنید
+- Webhook URLها را محرمانه نگه دارید
+- `Allowed Origins` را محدود کنید
+- Rate limiting در n8n یا reverse proxy فعال کنید

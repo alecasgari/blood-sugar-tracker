@@ -206,13 +206,13 @@
       ]
     }
   },
-  "pinData": {},
   "settings": {
     "executionOrder": "v1"
   },
   "staticData": null,
   "tags": [{ "name": "blood-sugar-tracker" }],
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": false,
+    "notes": "IMPORTANT: This workflow must NOT save to Google Sheets. Only analyze OCR and return bloodSugar. Saving happens via bst-save-record workflow."
   }
 }

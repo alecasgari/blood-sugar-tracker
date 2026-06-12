@@ -7,6 +7,7 @@ import {
   isInTargetRange,
 } from './bloodSugar.js';
 import { MEAL_CONTEXTS } from './mealContext.js';
+import { dedupeRecords } from './records.js';
 
 let chartInstances = [];
 
@@ -342,7 +343,7 @@ async function loadReport() {
   }
 
   try {
-    const records = await fetchHistory(userId);
+    const records = dedupeRecords(await fetchHistory(userId));
     const stats = computeStats(records);
 
     if (!stats) {

@@ -2,6 +2,7 @@ import { getUserId, fetchHistory } from './api.js';
 import { showToast } from './toast.js';
 import { getBloodSugarStatus, getRecordMealContextId } from './bloodSugar.js';
 import { getMealContextLabel } from './mealContext.js';
+import { dedupeRecords } from './records.js';
 
 function renderSkeleton() {
   return `
@@ -124,7 +125,7 @@ async function loadHistory() {
   }
 
   try {
-    const records = await fetchHistory(userId);
+    const records = dedupeRecords(await fetchHistory(userId));
 
     if (!records.length) {
       container.innerHTML = renderEmpty();

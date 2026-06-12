@@ -135,7 +135,17 @@
 
 ## OCR (Gemini)
 
-ورکفلو آپلود فقط **آنالیز** می‌کند و در Sheet ذخیره نمی‌کند. ثبت نهایی (با زمان‌بندی وعده) از webhook `save-record` انجام می‌شود.
+ورکفلو آپلود **فقط آنالیز** می‌کند و در Sheet ذخیره **نمی‌کند**. ثبت نهایی از webhook `save-record` انجام می‌شود.
+
+### رفع ثبت دوباره (Duplicate)
+
+اگر هر اندازه‌گیری **دو بار** در Sheet ظاهر می‌شود (یکی بدون `MealContext` و یکی با آن):
+
+1. ورکفلو **BST - Upload Blood Sugar** را در n8n باز کنید
+2. مطمئن شوید نود **Google Sheets / Save Record** وجود **ندارد**
+3. بعد از «OCR Error?» فقط باید به **Respond Analyze Success** وصل باشد (نه Sheets)
+4. ورکفلو قدیمی/تکراری با همان path را **Deactivate** کنید
+5. فایل `bst-upload-blood-sugar.json` را دوباره import کنید یا دستی اصلاح کنید
 
 راهنمای Gemini: `GEMINI-OCR-SETUP.md`
 

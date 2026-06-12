@@ -272,6 +272,7 @@ export function initTracker() {
     const btnSave = document.getElementById('btn-save-record');
     const hint = document.getElementById('meal-context-hint');
     let selectedContext = '';
+    let isSaving = false;
 
     document.querySelectorAll('input[name="mealContext"]').forEach((radio) => {
       radio.addEventListener('change', () => {
@@ -293,10 +294,12 @@ export function initTracker() {
     });
 
     btnSave?.addEventListener('click', async () => {
-      if (!selectedContext || !pendingReading) return;
+      if (isSaving || !selectedContext || !pendingReading) return;
+      isSaving = true;
 
       const userId = getUserId();
       if (!userId) {
+        isSaving = false;
         showToast('لطفاً دوباره وارد شوید', 'error');
         return;
       }
@@ -326,6 +329,7 @@ export function initTracker() {
           showForm();
         });
       } catch (err) {
+        isSaving = false;
         showToast(err.message || 'خطا در ثبت', 'error');
         btnSave.disabled = false;
         btnSave.innerHTML = originalHtml;

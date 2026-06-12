@@ -1,6 +1,7 @@
 import { getUserId, fetchHistory } from './api.js';
 import { showToast } from './toast.js';
-import { getBloodSugarStatus } from './bloodSugar.js';
+import { getBloodSugarStatus, getRecordMealContextId } from './bloodSugar.js';
+import { getMealContextLabel } from './mealContext.js';
 
 function renderSkeleton() {
   return `
@@ -24,7 +25,10 @@ function renderRecordCard(record) {
   const time = record.Time || record.time || '';
   const bloodSugar = record.BloodSugar ?? record.bloodSugar ?? record.value ?? '—';
   const notes = record.Notes || record.notes || '';
-  const status = getBloodSugarStatus(bloodSugar);
+  const mealContextId = getRecordMealContextId(record);
+  const mealLabel = mealContextId ? getMealContextLabel(mealContextId) : '';
+  const source = record.Source || record.source || '';
+  const status = getBloodSugarStatus(bloodSugar, mealContextId || undefined);
 
   return `
     <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-200">
@@ -44,6 +48,12 @@ function renderRecordCard(record) {
         <span class="text-3xl font-bold ${status.text}">${bloodSugar}</span>
         <span class="text-sm text-slate-400 mb-1">mg/dL</span>
       </div>
+
+      ${mealLabel ? `
+        <p class="mt-2 text-xs font-medium text-slate-500 bg-slate-50 inline-block px-2.5 py-1 rounded-lg border border-slate-100">
+          ${mealLabel}${source === 'manual' ? ' · دستی' : ''}
+        </p>
+      ` : ''}
 
       ${notes ? `
         <p class="mt-3 text-sm text-slate-500 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">

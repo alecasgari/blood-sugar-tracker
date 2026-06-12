@@ -5,6 +5,7 @@
 export const WEBHOOK_LOGIN = 'https://n8n.alecasgari.com/webhook/login';
 export const WEBHOOK_REGISTER = 'https://n8n.alecasgari.com/webhook/register';
 export const WEBHOOK_UPLOAD = 'https://n8n.alecasgari.com/webhook/upload-blood-sugar';
+export const WEBHOOK_SAVE_RECORD = 'https://n8n.alecasgari.com/webhook/save-record';
 export const WEBHOOK_HISTORY = 'https://n8n.alecasgari.com/webhook/history';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -106,14 +107,23 @@ export async function register(email, password) {
 //  Blood Sugar Upload
 // ═══════════════════════════════════════════════════════════════════
 
-export async function uploadBloodSugar(userId, imageFile) {
+export async function analyzeBloodSugar(userId, imageFile) {
   const formData = new FormData();
   formData.append('userId', userId);
   formData.append('image', imageFile, imageFile.name || 'blood-sugar.jpg');
+  formData.append('analyzeOnly', 'true');
 
   return request(WEBHOOK_UPLOAD, {
     method: 'POST',
     body: formData,
+  });
+}
+
+export async function saveRecord(userId, { bloodSugar, mealContext, source = 'manual', notes = '' }) {
+  return request(WEBHOOK_SAVE_RECORD, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, bloodSugar, mealContext, source, notes }),
   });
 }
 

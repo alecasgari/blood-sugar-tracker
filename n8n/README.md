@@ -20,8 +20,8 @@
 
 ### تب `Records`
 
-| recordId | userId | Date | Time | BloodSugar | Notes | createdAt |
-|----------|--------|------|------|------------|-------|-----------|
+| recordId | userId | Date | Time | BloodSugar | MealContext | Source | Notes | createdAt |
+|----------|--------|------|------|------------|-------------|--------|-------|-----------|
 | (خالی بگذارید) | | | | | | |
 
 **ID شیت** را از URL کپی کنید:
@@ -36,6 +36,7 @@
    - `bst-register.json`
    - `bst-login.json`
    - `bst-upload-blood-sugar.json`
+   - `bst-save-record.json`
    - `bst-history.json`
 3. در **هر ورکفلو**، نودهای **Google Sheets** را باز کنید و:
    - Credential گوگل خود را وصل کنید
@@ -51,7 +52,8 @@
 |--------|--------------|-----------------|
 | Register | `/webhook/register` | `WEBHOOK_REGISTER` |
 | Login | `/webhook/login` | `WEBHOOK_LOGIN` |
-| Upload | `/webhook/upload-blood-sugar` | `WEBHOOK_UPLOAD` |
+| Upload (آنالیز عکس) | `/webhook/upload-blood-sugar` | `WEBHOOK_UPLOAD` |
+| Save Record (ثبت نهایی) | `/webhook/save-record` | `WEBHOOK_SAVE_RECORD` |
 | History | `/webhook/history` | `WEBHOOK_HISTORY` |
 
 مثال:
@@ -83,13 +85,32 @@
 { "success": true, "userId": "uuid", "email": "user@example.com" }
 ```
 
-### آپلود عکس — POST multipart/form-data
+### آنالیز عکس — POST multipart/form-data
 - `userId` — متن
 - `image` — فایل تصویر
+- `analyzeOnly` — `true` (فقط OCR، بدون ذخیره)
 
 **پاسخ موفق (200):**
 ```json
-{ "success": true, "bloodSugar": 112, "message": "ثبت شد" }
+{ "success": true, "bloodSugar": 112, "notes": "...", "message": "آنالیز انجام شد" }
+```
+
+### ثبت نهایی — POST JSON
+```json
+{
+  "userId": "uuid",
+  "bloodSugar": 112,
+  "mealContext": "2h_after",
+  "source": "ocr",
+  "notes": "..."
+}
+```
+
+مقادیر `mealContext`: `fasting`, `before_meal`, `1h_after`, `2h_after`, `3h_after`, `4h_plus`, `before_sleep`
+
+**پاسخ موفق (200):**
+```json
+{ "success": true, "bloodSugar": 112, "mealContext": "2h_after", "message": "ثبت شد" }
 ```
 
 ### تاریخچه — POST JSON
@@ -99,7 +120,7 @@
 **پاسخ موفق (200):** آرایه مستقیم
 ```json
 [
-  { "Date": "1404/03/15", "Time": "08:30", "BloodSugar": 95, "Notes": "ثبت خودکار از عکس" }
+  { "Date": "1404/03/15", "Time": "08:30", "BloodSugar": 95, "MealContext": "fasting", "Source": "manual", "Notes": "ثبت دستی" }
 ]
 ```
 
@@ -112,13 +133,11 @@
 
 ---
 
-## OCR واقعی (جایگزین Mock)
+## OCR (Gemini)
 
-ورکفلو آپلود فعلاً با **Code node** مقدار قند را شبیه‌سازی می‌کند. برای OCR واقعی:
+ورکفلو آپلود فقط **آنالیز** می‌کند و در Sheet ذخیره نمی‌کند. ثبت نهایی (با زمان‌بندی وعده) از webhook `save-record` انجام می‌شود.
 
-1. نود **OpenAI** (یا **HTTP Request** به Gemini Vision) بعد از Webhook اضافه کنید
-2. تصویر باینری را از `{{ $binary.image }}` بخوانید
-3. خروجی مدل را Parse کرده و `BloodSugar` را در Google Sheets ذخیره کنید
+راهنمای Gemini: `GEMINI-OCR-SETUP.md`
 
 ---
 

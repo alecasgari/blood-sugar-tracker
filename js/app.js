@@ -3,16 +3,19 @@ import { renderAuth, initAuth } from './auth.js';
 import { renderTracker, initTracker } from './tracker.js';
 import { renderHistory, initHistory } from './history.js';
 import { renderProfile, initProfile } from './profile.js';
+import { renderReport, initReport, cleanupReport } from './report.js';
 
 const PAGE_TITLES = {
   tracker: 'ثبت قند',
   history: 'تاریخچه',
+  report: 'گزارش',
   profile: 'پروفایل',
 };
 
 const pages = {
   tracker: { render: renderTracker, init: initTracker },
   history: { render: renderHistory, init: initHistory },
+  report: { render: renderReport, init: initReport, cleanup: cleanupReport },
   profile: { render: renderProfile, init: initProfile },
 };
 
@@ -38,6 +41,8 @@ function updateNavActive(page) {
 
 function navigateTo(page) {
   if (!pages[page]) return;
+
+  pages[currentPage]?.cleanup?.();
 
   currentPage = page;
   const root = document.getElementById('app-root');

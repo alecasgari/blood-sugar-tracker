@@ -57,7 +57,7 @@ export function renderTracker() {
         <!-- Upload Area -->
         <div id="upload-zone"
           class="upload-zone relative rounded-2xl border-2 border-dashed border-slate-200 bg-white p-6 text-center cursor-pointer shadow-sm">
-          <input id="image-input" type="file" accept="image/*" capture="environment"
+          <input id="image-input" type="file" accept="image/*"
             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
 
           <div id="upload-placeholder" class="py-6">
@@ -89,7 +89,7 @@ export function renderTracker() {
           </div>
         </div>
 
-        <input id="change-image-input" type="file" accept="image/*" capture="environment" class="hidden" />
+        <input id="change-image-input" type="file" accept="image/*" class="hidden" />
 
         <button id="btn-submit" type="button" disabled
           class="btn-press mt-6 w-full py-4 rounded-xl bg-gradient-to-l from-brand-600 to-brand-500 text-white font-semibold shadow-lg shadow-brand-500/30 hover:shadow-brand-500/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2">

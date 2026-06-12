@@ -56,19 +56,35 @@ export function renderTracker() {
       <div id="tracker-form">
         <!-- Upload Area -->
         <div id="upload-zone"
-          class="upload-zone relative rounded-2xl border-2 border-dashed border-slate-200 bg-white p-6 text-center cursor-pointer shadow-sm">
-          <input id="image-input" type="file" accept="image/*"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          class="upload-zone rounded-2xl border-2 border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
 
-          <div id="upload-placeholder" class="py-6">
+          <div id="upload-placeholder" class="py-4">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 text-brand-500 mb-4">
               <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.125 13.125L12 17.25l-4.125-4.125M12 17.25V6.75" />
               </svg>
             </div>
-            <p class="font-semibold text-slate-700">عکس بگیرید یا از گالری انتخاب کنید</p>
-            <p class="text-xs text-slate-400 mt-1.5">فرمت‌های JPG، PNG پشتیبانی می‌شوند</p>
+            <p class="font-semibold text-slate-700">عکس گلوکومتر را اضافه کنید</p>
+            <p class="text-xs text-slate-400 mt-1.5">از دوربین بگیرید یا از گالری انتخاب کنید</p>
+
+            <div class="flex gap-3 mt-6 max-w-xs mx-auto">
+              <button id="btn-pick-gallery" type="button"
+                class="btn-press flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-brand-50 text-brand-700 font-semibold text-sm border border-brand-100 hover:bg-brand-100 transition-all">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                </svg>
+                گالری
+              </button>
+              <button id="btn-pick-camera" type="button"
+                class="btn-press flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-l from-brand-600 to-brand-500 text-white font-semibold text-sm shadow-md shadow-brand-500/25 hover:shadow-brand-500/40 transition-all">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.125 13.125L12 17.25l-4.125-4.125M12 17.25V6.75" />
+                </svg>
+                دوربین
+              </button>
+            </div>
           </div>
 
           <div id="preview-container" class="hidden">
@@ -82,14 +98,22 @@ export function renderTracker() {
                 </svg>
               </button>
             </div>
-            <button id="btn-change-image" type="button"
-              class="mt-4 text-sm text-brand-600 font-medium hover:text-brand-700 transition-colors">
-              تغییر عکس
-            </button>
+            <div class="flex gap-3 mt-4 justify-center max-w-xs mx-auto">
+              <button id="btn-change-gallery" type="button"
+                class="text-sm text-brand-600 font-medium hover:text-brand-700 transition-colors px-3 py-1">
+                گالری
+              </button>
+              <span class="text-slate-300">|</span>
+              <button id="btn-change-camera" type="button"
+                class="text-sm text-brand-600 font-medium hover:text-brand-700 transition-colors px-3 py-1">
+                دوربین
+              </button>
+            </div>
           </div>
         </div>
 
-        <input id="change-image-input" type="file" accept="image/*" class="hidden" />
+        <input id="gallery-input" type="file" accept="image/*" class="hidden" />
+        <input id="camera-input" type="file" accept="image/*" capture="environment" class="hidden" />
 
         <button id="btn-submit" type="button" disabled
           class="btn-press mt-6 w-full py-4 rounded-xl bg-gradient-to-l from-brand-600 to-brand-500 text-white font-semibold shadow-lg shadow-brand-500/30 hover:shadow-brand-500/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2">
@@ -126,14 +150,22 @@ export function initTracker() {
   const resultSlot = document.getElementById('result-slot');
   const trackerTips = document.getElementById('tracker-tips');
   const uploadZone = document.getElementById('upload-zone');
-  const imageInput = document.getElementById('image-input');
-  const changeImageInput = document.getElementById('change-image-input');
+  const galleryInput = document.getElementById('gallery-input');
+  const cameraInput = document.getElementById('camera-input');
   const uploadPlaceholder = document.getElementById('upload-placeholder');
   const previewContainer = document.getElementById('preview-container');
   const previewImage = document.getElementById('preview-image');
   const btnRemove = document.getElementById('btn-remove-image');
-  const btnChange = document.getElementById('btn-change-image');
+  const btnPickGallery = document.getElementById('btn-pick-gallery');
+  const btnPickCamera = document.getElementById('btn-pick-camera');
+  const btnChangeGallery = document.getElementById('btn-change-gallery');
+  const btnChangeCamera = document.getElementById('btn-change-camera');
   const btnSubmit = document.getElementById('btn-submit');
+
+  function openFilePicker(input) {
+    input.value = '';
+    input.click();
+  }
 
   function hideResult() {
     resultSlot.innerHTML = '';
@@ -154,8 +186,8 @@ export function initTracker() {
 
   function resetForm() {
     selectedFile = null;
-    imageInput.value = '';
-    changeImageInput.value = '';
+    galleryInput.value = '';
+    cameraInput.value = '';
     previewImage.src = '';
     uploadPlaceholder.classList.remove('hidden');
     previewContainer.classList.add('hidden');
@@ -183,20 +215,20 @@ export function initTracker() {
     reader.readAsDataURL(file);
   }
 
-  imageInput.addEventListener('change', (e) => {
+  galleryInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) showPreview(file);
   });
 
-  changeImageInput.addEventListener('change', (e) => {
+  cameraInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) showPreview(file);
   });
 
-  btnChange.addEventListener('click', (e) => {
-    e.stopPropagation();
-    changeImageInput.click();
-  });
+  btnPickGallery.addEventListener('click', () => openFilePicker(galleryInput));
+  btnPickCamera.addEventListener('click', () => openFilePicker(cameraInput));
+  btnChangeGallery.addEventListener('click', () => openFilePicker(galleryInput));
+  btnChangeCamera.addEventListener('click', () => openFilePicker(cameraInput));
 
   btnRemove.addEventListener('click', (e) => {
     e.stopPropagation();

@@ -1,5 +1,6 @@
 import { login, register, saveSession, extractAuthResult, getPasswordResetTelegramUrl } from './api.js';
 import { showToast } from './toast.js';
+import { renderHoneypotField, readHoneypot, blockIfHoneypot } from './honeypot.js';
 
 export function renderAuth() {
   return `
@@ -32,7 +33,8 @@ export function renderAuth() {
 
           <div class="p-6">
             <!-- Login Form -->
-            <form id="form-login" class="space-y-4">
+            <form id="form-login" class="space-y-4 relative">
+              ${renderHoneypotField()}
               <div>
                 <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1.5">ایمیل</label>
                 <input id="login-email" type="email" required autocomplete="email"
@@ -64,7 +66,8 @@ export function renderAuth() {
             </form>
 
             <!-- Register Form -->
-            <form id="form-register" class="space-y-4 hidden">
+            <form id="form-register" class="space-y-4 hidden relative">
+              ${renderHoneypotField()}
               <div>
                 <label for="register-email" class="block text-sm font-medium text-slate-700 mb-1.5">ایمیل</label>
                 <input id="register-email" type="email" required autocomplete="email"
@@ -139,9 +142,14 @@ export function initAuth(onSuccess) {
     e.preventDefault();
 
     const isLoginForm = type === 'login';
+    const form = isLoginForm ? formLogin : formRegister;
     const btn = document.getElementById(isLoginForm ? 'btn-login' : 'btn-register');
+
+    if (blockIfHoneypot(readHoneypot(form))) return;
+
     const email = document.getElementById(isLoginForm ? 'login-email' : 'register-email').value.trim();
     const password = document.getElementById(isLoginForm ? 'login-password' : 'register-password').value;
+    const honeypot = readHoneypot(form);
 
     if (!email || !password) {
       showToast('لطفاً تمام فیلدها را پر کنید', 'error');
@@ -154,8 +162,8 @@ export function initAuth(onSuccess) {
 
     try {
       const data = isLoginForm
-        ? await login(email, password)
-        : await register(email, password);
+        ? await login(email, password, honeypot)
+        : await register(email, password, honeypot);
 
       const { success, userId, email: returnedEmail } = extractAuthResult(data);
 

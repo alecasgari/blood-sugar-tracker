@@ -145,6 +145,20 @@
 
 ---
 
+## Honeypot (ضد ربات)
+
+فرم‌های فرانت یک فیلد مخفی `website` می‌فرستند. اگر پر شود، درخواست رد می‌شود.
+
+ورکفلوهای زیر در نود Validate اول بررسی honeypot دارند — پس از pull، **دوباره import** یا کد Validate را به‌روز کنید:
+
+- `bst-login.json`
+- `bst-register.json`
+- `bst-change-password.json`
+- `bst-save-record.json`
+- `bst-upload-blood-sugar.json`
+
+---
+
 ### زمان‌بندی (Timezone)
 
 تنظیم timezone در n8n UI روی Code node اثر **ندارد**. سرور n8n معمولاً UTC است.

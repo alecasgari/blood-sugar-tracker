@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json;\nconst userId = (body.userId || body.userid || '').toString().trim();\n\nif (!userId) {\n  return [{ json: { error: true, statusCode: 400, message: 'شناسه کاربر الزامی است' } }];\n}\n\nconst binaryKey = item.binary?.image ? 'image' : (item.binary?.data ? 'data' : null);\nif (!binaryKey) {\n  return [{ json: { error: true, statusCode: 400, message: 'فایل تصویر ارسال نشده است' } }];\n}\n\nreturn [{\n  json: { error: false, userId, binaryKey },\n  binary: item.binary\n}];"
+        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json;\nif ((body.website || '').toString().trim()) {\n  return [{ json: { error: true, statusCode: 400, message: 'درخواست نامعتبر است' } }];\n}\nconst userId = (body.userId || body.userid || '').toString().trim();\n\nif (!userId) {\n  return [{ json: { error: true, statusCode: 400, message: 'شناسه کاربر الزامی است' } }];\n}\n\nconst binaryKey = item.binary?.image ? 'image' : (item.binary?.data ? 'data' : null);\nif (!binaryKey) {\n  return [{ json: { error: true, statusCode: 400, message: 'فایل تصویر ارسال نشده است' } }];\n}\n\nreturn [{\n  json: { error: false, userId, binaryKey },\n  binary: item.binary\n}];"
       },
       "id": "c1b2c3d4-0001-4000-8000-000000000002",
       "name": "Validate Input",

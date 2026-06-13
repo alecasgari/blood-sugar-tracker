@@ -2,6 +2,7 @@ import { getUserId, analyzeBloodSugar, saveRecord } from './api.js';
 import { showToast } from './toast.js';
 import { getBloodSugarStatus } from './bloodSugar.js';
 import { getMealContext, renderMealContextOptions } from './mealContext.js';
+import { renderHoneypotField, readHoneypot, blockIfHoneypot } from './honeypot.js';
 
 function renderConfirmCard(bloodSugar, notes, source) {
   const status = getBloodSugarStatus(bloodSugar);
@@ -111,7 +112,8 @@ export function renderTracker() {
         </button>
       </div>
 
-      <div id="tracker-form">
+      <div id="tracker-form" class="relative">
+        ${renderHoneypotField()}
         <!-- Photo mode -->
         <div id="mode-photo">
           <div id="upload-zone"
@@ -295,6 +297,7 @@ export function initTracker() {
 
     btnSave?.addEventListener('click', async () => {
       if (isSaving || !selectedContext || !pendingReading) return;
+      if (blockIfHoneypot(readHoneypot(trackerForm))) return;
       isSaving = true;
 
       const userId = getUserId();
@@ -314,7 +317,7 @@ export function initTracker() {
           mealContext: selectedContext,
           source: pendingReading.source,
           notes: pendingReading.notes,
-        });
+        }, readHoneypot(trackerForm));
 
         resultSlot.innerHTML = renderSavedCard(
           pendingReading.bloodSugar,
@@ -370,6 +373,7 @@ export function initTracker() {
   });
 
   btnSubmitManual.addEventListener('click', () => {
+    if (blockIfHoneypot(readHoneypot(trackerForm))) return;
     const val = Math.round(parseFloat(manualValue.value));
     if (isNaN(val) || val < 20 || val > 600) {
       showToast('مقدار بین ۲۰ تا ۶۰۰ وارد کنید', 'error');
@@ -380,6 +384,7 @@ export function initTracker() {
 
   btnSubmitPhoto.addEventListener('click', async () => {
     if (!selectedFile) return;
+    if (blockIfHoneypot(readHoneypot(trackerForm))) return;
 
     const userId = getUserId();
     if (!userId) {
@@ -392,7 +397,7 @@ export function initTracker() {
     btnSubmitPhoto.innerHTML = '<div class="spinner"></div><span>در حال آنالیز...</span>';
 
     try {
-      const data = await analyzeBloodSugar(userId, selectedFile);
+      const data = await analyzeBloodSugar(userId, selectedFile, readHoneypot(trackerForm));
       const bloodSugar = data?.bloodSugar ?? data?.BloodSugar;
       const notes = data?.notes || data?.Notes || '';
 

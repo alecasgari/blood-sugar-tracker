@@ -2,6 +2,8 @@
 //  n8n Webhook URLs — آدرس‌های خود را اینجا جایگذاری کنید
 // ═══════════════════════════════════════════════════════════════════
 
+import { HONEYPOT_FIELD } from './honeypot.js';
+
 export const WEBHOOK_LOGIN = 'https://n8n.alecasgari.com/webhook/login';
 export const WEBHOOK_REGISTER = 'https://n8n.alecasgari.com/webhook/register';
 export const WEBHOOK_UPLOAD = 'https://n8n.alecasgari.com/webhook/upload-blood-sugar';
@@ -99,27 +101,27 @@ async function request(url, options = {}, timeoutMs = 30000) {
 //  Auth API
 // ═══════════════════════════════════════════════════════════════════
 
-export async function login(email, password) {
+export async function login(email, password, honeypot = '') {
   return request(WEBHOOK_LOGIN, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, [HONEYPOT_FIELD]: honeypot }),
   });
 }
 
-export async function register(email, password) {
+export async function register(email, password, honeypot = '') {
   return request(WEBHOOK_REGISTER, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, [HONEYPOT_FIELD]: honeypot }),
   });
 }
 
-export async function changePassword(userId, currentPassword, newPassword) {
+export async function changePassword(userId, currentPassword, newPassword, honeypot = '') {
   return request(WEBHOOK_CHANGE_PASSWORD, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, currentPassword, newPassword }),
+    body: JSON.stringify({ userId, currentPassword, newPassword, [HONEYPOT_FIELD]: honeypot }),
   });
 }
 
@@ -127,11 +129,12 @@ export async function changePassword(userId, currentPassword, newPassword) {
 //  Blood Sugar Upload
 // ═══════════════════════════════════════════════════════════════════
 
-export async function analyzeBloodSugar(userId, imageFile) {
+export async function analyzeBloodSugar(userId, imageFile, honeypot = '') {
   const formData = new FormData();
   formData.append('userId', userId);
   formData.append('image', imageFile, imageFile.name || 'blood-sugar.jpg');
   formData.append('analyzeOnly', 'true');
+  formData.append(HONEYPOT_FIELD, honeypot);
 
   return request(WEBHOOK_UPLOAD, {
     method: 'POST',
@@ -139,11 +142,11 @@ export async function analyzeBloodSugar(userId, imageFile) {
   });
 }
 
-export async function saveRecord(userId, { bloodSugar, mealContext, source = 'manual', notes = '' }) {
+export async function saveRecord(userId, { bloodSugar, mealContext, source = 'manual', notes = '' }, honeypot = '') {
   return request(WEBHOOK_SAVE_RECORD, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, bloodSugar, mealContext, source, notes }),
+    body: JSON.stringify({ userId, bloodSugar, mealContext, source, notes, [HONEYPOT_FIELD]: honeypot }),
   });
 }
 

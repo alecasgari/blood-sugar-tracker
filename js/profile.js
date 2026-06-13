@@ -1,5 +1,6 @@
 import { getUserEmail, getUserId, clearSession, changePassword } from './api.js';
 import { showToast } from './toast.js';
+import { renderHoneypotField, readHoneypot, blockIfHoneypot } from './honeypot.js';
 
 export function renderProfile() {
   const email = getUserEmail() || 'کاربر';
@@ -55,7 +56,8 @@ export function renderProfile() {
           </svg>
           تغییر رمز عبور
         </h3>
-        <form id="form-change-password" class="space-y-3">
+        <form id="form-change-password" class="space-y-3 relative">
+          ${renderHoneypotField()}
           <div>
             <label for="current-password" class="block text-xs font-medium text-slate-600 mb-1.5">رمز فعلی</label>
             <input id="current-password" type="password" required autocomplete="current-password"
@@ -105,6 +107,8 @@ export function initProfile(onLogout) {
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    if (blockIfHoneypot(readHoneypot(form))) return;
+
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
@@ -133,7 +137,7 @@ export function initProfile(onLogout) {
     btn.innerHTML = '<div class="spinner"></div>';
 
     try {
-      await changePassword(userId, currentPassword, newPassword);
+      await changePassword(userId, currentPassword, newPassword, readHoneypot(form));
       form.reset();
       showToast('رمز عبور با موفقیت تغییر کرد', 'success');
     } catch (err) {

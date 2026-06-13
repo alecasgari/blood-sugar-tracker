@@ -7,6 +7,7 @@ export const WEBHOOK_REGISTER = 'https://n8n.alecasgari.com/webhook/register';
 export const WEBHOOK_UPLOAD = 'https://n8n.alecasgari.com/webhook/upload-blood-sugar';
 export const WEBHOOK_SAVE_RECORD = 'https://n8n.alecasgari.com/webhook/save-record';
 export const WEBHOOK_HISTORY = 'https://n8n.alecasgari.com/webhook/history';
+export const WEBHOOK_CHANGE_PASSWORD = 'https://n8n.alecasgari.com/webhook/change-password';
 
 export const SUPPORT_TELEGRAM_URL = 'https://t.me/alecasgari';
 
@@ -111,6 +112,14 @@ export async function register(email, password) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function changePassword(userId, currentPassword, newPassword) {
+  return request(WEBHOOK_CHANGE_PASSWORD, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, currentPassword, newPassword }),
   });
 }
 

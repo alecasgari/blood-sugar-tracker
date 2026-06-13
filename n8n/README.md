@@ -37,6 +37,7 @@
    - `bst-login.json`
    - `bst-upload-blood-sugar.json`
    - `bst-save-record.json`
+   - `bst-change-password.json`
    - `bst-history.json`
 3. در **هر ورکفلو**، نودهای **Google Sheets** را باز کنید و:
    - Credential گوگل خود را وصل کنید
@@ -55,6 +56,7 @@
 | Upload (آنالیز عکس) | `/webhook/upload-blood-sugar` | `WEBHOOK_UPLOAD` |
 | Save Record (ثبت نهایی) | `/webhook/save-record` | `WEBHOOK_SAVE_RECORD` |
 | History | `/webhook/history` | `WEBHOOK_HISTORY` |
+| Change Password | `/webhook/change-password` | `WEBHOOK_CHANGE_PASSWORD` |
 
 مثال:
 `https://your-n8n.app.n8n.cloud/webhook/login`
@@ -83,6 +85,23 @@
 **پاسخ موفق (200):**
 ```json
 { "success": true, "userId": "uuid", "email": "user@example.com" }
+```
+
+### تغییر رمز — POST JSON
+```json
+{
+  "userId": "uuid",
+  "currentPassword": "oldpass",
+  "newPassword": "newpass123"
+}
+```
+**پاسخ موفق (200):**
+```json
+{ "success": true, "message": "رمز عبور با موفقیت تغییر کرد" }
+```
+**پاسخ خطا (401):**
+```json
+{ "success": false, "message": "رمز عبور فعلی اشتباه است" }
 ```
 
 ### آنالیز عکس — POST multipart/form-data

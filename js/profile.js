@@ -1,4 +1,5 @@
-import { getUserEmail, clearSession } from './api.js';
+import { getUserEmail, getUserId, clearSession, changePassword } from './api.js';
+import { showToast } from './toast.js';
 
 export function renderProfile() {
   const email = getUserEmail() || 'کاربر';
@@ -20,7 +21,7 @@ export function renderProfile() {
       </div>
 
       <!-- Info Cards -->
-      <div class="space-y-3 mb-8">
+      <div class="space-y-3 mb-4">
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-500">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
@@ -41,9 +42,43 @@ export function renderProfile() {
           </div>
           <div>
             <p class="text-xs text-slate-400">وضعیت</p>
-            <p class="text-sm font-medium text-emerald-600">متصل به n8n</p>
+            <p class="text-sm font-medium text-emerald-600">متصل به سرور</p>
           </div>
         </div>
+      </div>
+
+      <!-- Change Password -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-6">
+        <h3 class="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          تغییر رمز عبور
+        </h3>
+        <form id="form-change-password" class="space-y-3">
+          <div>
+            <label for="current-password" class="block text-xs font-medium text-slate-600 mb-1.5">رمز فعلی</label>
+            <input id="current-password" type="password" required autocomplete="current-password"
+              placeholder="رمز فعلی"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
+          </div>
+          <div>
+            <label for="new-password" class="block text-xs font-medium text-slate-600 mb-1.5">رمز جدید</label>
+            <input id="new-password" type="password" required autocomplete="new-password" minlength="6"
+              placeholder="حداقل ۶ کاراکتر"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
+          </div>
+          <div>
+            <label for="confirm-password" class="block text-xs font-medium text-slate-600 mb-1.5">تکرار رمز جدید</label>
+            <input id="confirm-password" type="password" required autocomplete="new-password" minlength="6"
+              placeholder="تکرار رمز جدید"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
+          </div>
+          <button type="submit" id="btn-change-password"
+            class="btn-press w-full py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            ذخیره رمز جدید
+          </button>
+        </form>
       </div>
 
       <!-- Logout -->
@@ -62,5 +97,50 @@ export function initProfile(onLogout) {
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     clearSession();
     onLogout();
+  });
+
+  const form = document.getElementById('form-change-password');
+  const btn = document.getElementById('btn-change-password');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword.length < 6) {
+      showToast('رمز جدید باید حداقل ۶ کاراکتر باشد', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast('رمز جدید و تکرار آن یکسان نیست', 'error');
+      return;
+    }
+    if (currentPassword === newPassword) {
+      showToast('رمز جدید باید با رمز فعلی متفاوت باشد', 'error');
+      return;
+    }
+
+    const userId = getUserId();
+    if (!userId) {
+      showToast('لطفاً دوباره وارد شوید', 'error');
+      return;
+    }
+
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div>';
+
+    try {
+      await changePassword(userId, currentPassword, newPassword);
+      form.reset();
+      showToast('رمز عبور با موفقیت تغییر کرد', 'success');
+    } catch (err) {
+      showToast(err.message || 'خطا در تغییر رمز', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   });
 }

@@ -1,4 +1,4 @@
-import { login, register, saveSession, extractAuthResult } from './api.js';
+import { login, register, saveSession, extractAuthResult, getPasswordResetTelegramUrl } from './api.js';
 import { showToast } from './toast.js';
 
 export function renderAuth() {
@@ -40,11 +40,23 @@ export function renderAuth() {
                   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
               </div>
               <div>
-                <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1.5">رمز عبور</label>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label for="login-password" class="block text-sm font-medium text-slate-700">رمز عبور</label>
+                  <a id="link-forgot-password" href="${getPasswordResetTelegramUrl()}" target="_blank" rel="noopener noreferrer"
+                    class="text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">
+                    فراموش کردید؟
+                  </a>
+                </div>
                 <input id="login-password" type="password" required autocomplete="current-password"
                   placeholder="••••••••"
                   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all" />
               </div>
+              <p class="text-xs text-slate-400 -mt-2">
+                برای بازیابی رمز، از طریق
+                <a id="link-support-telegram" href="${getPasswordResetTelegramUrl()}" target="_blank" rel="noopener noreferrer"
+                  class="text-brand-600 hover:text-brand-700 font-medium">تلگرام پشتیبانی</a>
+                پیام دهید.
+              </p>
               <button type="submit" id="btn-login"
                 class="btn-press w-full py-3.5 rounded-xl bg-gradient-to-l from-brand-600 to-brand-500 text-white font-semibold text-sm shadow-lg shadow-brand-500/30 hover:shadow-brand-500/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                 <span>ورود به حساب</span>
@@ -109,6 +121,19 @@ export function initAuth(onSuccess) {
 
   tabLogin.addEventListener('click', () => switchTab('login'));
   tabRegister.addEventListener('click', () => switchTab('register'));
+
+  const loginEmail = document.getElementById('login-email');
+  const forgotLink = document.getElementById('link-forgot-password');
+  const supportLink = document.getElementById('link-support-telegram');
+
+  function updateForgotPasswordLinks() {
+    const url = getPasswordResetTelegramUrl(loginEmail?.value.trim() || '');
+    forgotLink?.setAttribute('href', url);
+    supportLink?.setAttribute('href', url);
+  }
+
+  loginEmail?.addEventListener('input', updateForgotPasswordLinks);
+  updateForgotPasswordLinks();
 
   async function handleAuthSubmit(e, type) {
     e.preventDefault();

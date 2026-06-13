@@ -8,6 +8,17 @@ export const WEBHOOK_UPLOAD = 'https://n8n.alecasgari.com/webhook/upload-blood-s
 export const WEBHOOK_SAVE_RECORD = 'https://n8n.alecasgari.com/webhook/save-record';
 export const WEBHOOK_HISTORY = 'https://n8n.alecasgari.com/webhook/history';
 
+export const SUPPORT_TELEGRAM_URL = 'https://t.me/alecasgari';
+
+export function getPasswordResetTelegramUrl(email = '') {
+  const text = [
+    'سلام، رمز عبور اپ قند خون را فراموش کرده‌ام.',
+    email ? `ایمیل حساب: ${email}` : 'ایمیل حساب: ',
+    'لطفاً رمز جدید برایم تنظیم کنید.',
+  ].join('\n');
+  return `${SUPPORT_TELEGRAM_URL}?text=${encodeURIComponent(text)}`;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  LocalStorage Keys
 // ═══════════════════════════════════════════════════════════════════
